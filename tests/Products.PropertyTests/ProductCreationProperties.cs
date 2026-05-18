@@ -25,7 +25,7 @@ public class ProductCreationProperties : IClassFixture<TestFixture>
     public Property ValidProductCreation_Returns201WithId(CreateProductRequest request)
     {
         // Only test with valid products from our generator
-        if (string.IsNullOrEmpty(request.Name) || request.Price < 0 || string.IsNullOrEmpty(request.Colour))
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Price < 0 || string.IsNullOrWhiteSpace(request.Colour))
             return true.ToProperty();
 
         var token = _fixture.GetTokenAsync().GetAwaiter().GetResult();

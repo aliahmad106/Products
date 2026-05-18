@@ -7,13 +7,17 @@ public static class ProductGenerators
 {
     public static Arbitrary<CreateProductRequest> ValidProduct()
     {
-        return (from name in Arb.Generate<NonEmptyString>()
+        var validNameGen = from prefix in Gen.Elements("Product", "Item", "Widget", "Gadget", "Tool")
+                           from suffix in Arb.Generate<NonEmptyString>().Select(s => s.Get.Trim())
+                           select string.IsNullOrWhiteSpace(suffix) ? prefix : $"{prefix} {suffix}";
+
+        return (from name in validNameGen
                 from desc in Gen.OneOf(
                     Gen.Constant<string?>(null),
                     Arb.Generate<NonEmptyString>().Select(s => (string?)s.Get))
                 from price in Gen.Choose(0, 100000).Select(p => (decimal)p / 100m)
                 from colour in Gen.Elements("Red", "Blue", "Green", "Yellow", "Black", "White", "Purple")
-                select new CreateProductRequest(name.Get, desc, price, colour))
+                select new CreateProductRequest(name, desc, price, colour))
             .ToArbitrary();
     }
 
