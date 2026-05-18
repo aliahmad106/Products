@@ -1,0 +1,53 @@
+using FluentValidation;
+using Products.Application.DTOs;
+using Products.Application.Interfaces;
+using Products.Domain.Entities;
+
+namespace Products.Application.Services;
+
+public class ProductService : IProductService
+{
+    private readonly IProductRepository _repository;
+    private readonly IValidator<CreateProductRequest> _validator;
+
+    public ProductService(IProductRepository repository, IValidator<CreateProductRequest> validator)
+    {
+        _repository = repository;
+        _validator = validator;
+    }
+
+    public async Task<ProductResponse> CreateAsync(CreateProductRequest request, CancellationToken ct = default)
+    {
+        var validationResult = await _validator.ValidateAsync(request, ct);
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
+
+        var product = new Product(request.Name, request.Description, request.Price, request.Colour);
+        var created = await _repository.AddAsync(product, ct);
+
+        return MapToResponse(created);
+    }
+
+    public async Task<IReadOnlyList<ProductResponse>> GetAllAsync(string? colour, CancellationToken ct = default)
+    {
+        var products = string.IsNullOrWhiteSpace(colour)
+            ? await _repository.GetAllAsync(ct)
+            : await _repository.GetByColourAsync(colour, ct);
+
+        return products.Select(MapToResponse).ToList().AsReadOnly();
+    }
+
+    private static ProductResponse MapToResponse(Product product)
+    {
+        return new ProductResponse(
+            product.Id,
+            product.Name,
+            product.Description,
+            product.Price,
+            product.Colour,
+            product.CreatedAt
+        );
+    }
+}
