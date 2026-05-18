@@ -52,7 +52,7 @@ public class ProductRepository : IProductRepository
         {
             return (IReadOnlyList<Product>)await _context.Products
                 .AsNoTracking()
-                .Where(p => p.Colour.ToLower() == colour.ToLower())
+                .Where(p => p.Colour.ToLower().Contains(colour.ToLower()))
                 .ToListAsync(token);
         }, ct);
     }

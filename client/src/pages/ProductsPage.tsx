@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { apiFetch } from '../services/api';
 import { Product } from '../types';
@@ -6,26 +6,36 @@ import CreateProductForm from '../components/CreateProductForm';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [colourFilter, setColourFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const { logout } = useAuth();
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const query = colourFilter.trim() ? `?colour=${encodeURIComponent(colourFilter.trim())}` : '';
-      const data = await apiFetch<Product[]>(`/api/products${query}`);
+      const data = await apiFetch<Product[]>('/api/products');
       setProducts(data);
     } catch {
       // 401 is handled by apiFetch redirect
     } finally {
       setLoading(false);
     }
-  }, [colourFilter]);
+  }, []);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  const filteredProducts = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return products;
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(term) ||
+        p.colour.toLowerCase().includes(term) ||
+        (p.description && p.description.toLowerCase().includes(term))
+    );
+  }, [products, searchTerm]);
 
   return (
     <div className="products-container">
@@ -37,13 +47,13 @@ export default function ProductsPage() {
       <CreateProductForm onProductCreated={fetchProducts} />
 
       <div className="filter-section">
-        <label htmlFor="colour-filter">Filter by colour:</label>
+        <label htmlFor="search-filter">Search products:</label>
         <input
-          id="colour-filter"
+          id="search-filter"
           type="text"
-          value={colourFilter}
-          onChange={(e) => setColourFilter(e.target.value)}
-          placeholder="e.g. Red, Blue"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search by name, colour, or description..."
         />
       </div>
 
@@ -61,12 +71,12 @@ export default function ProductsPage() {
             </tr>
           </thead>
           <tbody>
-            {products.length === 0 ? (
+            {filteredProducts.length === 0 ? (
               <tr>
                 <td colSpan={5} className="empty-state">No products found</td>
               </tr>
             ) : (
-              products.map((product) => (
+              filteredProducts.map((product) => (
                 <tr key={product.id}>
                   <td>{product.name}</td>
                   <td>{product.description || '—'}</td>
