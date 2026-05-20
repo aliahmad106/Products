@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Products.Domain.Entities;
 using Products.Infrastructure.Data;
 
 namespace Products.IntegrationTests;
@@ -28,5 +29,14 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         });
 
         builder.UseEnvironment("Testing");
+    }
+
+    public void SeedTestUser()
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ProductsDbContext>();
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword("password123");
+        db.Users.Add(new User("admin", passwordHash));
+        db.SaveChanges();
     }
 }

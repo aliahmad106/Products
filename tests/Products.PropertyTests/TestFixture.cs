@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Products.Application.DTOs;
+using Products.Domain.Entities;
 using Products.Infrastructure.Data;
 
 namespace Products.PropertyTests;
@@ -41,6 +42,13 @@ public class TestFixture : IDisposable
         {
             HandleCookies = true
         });
+
+        // Seed test user
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ProductsDbContext>();
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword("password123");
+        db.Users.Add(new User("admin", passwordHash));
+        db.SaveChanges();
     }
 
     public async Task<string> GetTokenAsync()

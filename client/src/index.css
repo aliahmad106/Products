@@ -669,3 +669,14 @@ body {
 input:focus-visible {
   outline: none;
 }
+
+/* ===== Auth Links ===== */
+.auth-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}

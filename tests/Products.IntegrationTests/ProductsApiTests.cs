@@ -15,6 +15,7 @@ public class ProductsApiTests : IClassFixture<CustomWebApplicationFactory>
     public ProductsApiTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
+        _factory.SeedTestUser();
     }
 
     private async Task<string> GetTokenAsync(HttpClient client)

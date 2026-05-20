@@ -3,23 +3,36 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await login({ username, password });
-      toast.success('Welcome back!');
+      await register({ username, password });
+      toast.success('Account created! Welcome.');
       navigate('/');
-    } catch {
-      toast.error('Invalid username or password');
+    } catch (err: unknown) {
+      const apiErr = err as { message?: string };
+      toast.error(apiErr?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -36,7 +49,7 @@ export default function LoginPage() {
             <rect x="14" y="14" width="7" height="7" rx="1.5" fill="var(--primary)" opacity="0.5" />
           </svg>
           <h1>Products</h1>
-          <p>Sign in to manage your product catalogue</p>
+          <p>Create an account to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -47,8 +60,9 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              placeholder="Choose a username (min 3 chars)"
               required
+              minLength={3}
               autoComplete="username"
               autoFocus
             />
@@ -61,9 +75,24 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Choose a password (min 6 chars)"
               required
-              autoComplete="current-password"
+              minLength={6}
+              autoComplete="new-password"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirm-password">Confirm Password</label>
+            <input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
+              required
+              minLength={6}
+              autoComplete="new-password"
             />
           </div>
 
@@ -71,16 +100,16 @@ export default function LoginPage() {
             {loading ? (
               <span className="btn-loading">
                 <span className="spinner" aria-hidden="true" />
-                Signing in...
+                Creating account...
               </span>
             ) : (
-              'Sign In'
+              'Create Account'
             )}
           </button>
         </form>
 
         <div className="login-footer">
-          <p>Don't have an account? <Link to="/register" className="auth-link">Create one</Link></p>
+          <p>Already have an account? <Link to="/login" className="auth-link">Sign in</Link></p>
         </div>
       </div>
     </div>

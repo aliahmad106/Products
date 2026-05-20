@@ -1,4 +1,3 @@
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -23,12 +22,22 @@ public class AuthController : ControllerBase
 
     [HttpPost("login")]
     [EnableRateLimiting("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        var response = _authService.Authenticate(request);
+        var response = await _authService.AuthenticateAsync(request, ct);
         SetAuthCookies(response);
 
         return Ok(new { expiresAt = response.ExpiresAt });
+    }
+
+    [HttpPost("register")]
+    [EnableRateLimiting("login")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken ct)
+    {
+        var response = await _authService.RegisterAsync(request, ct);
+        SetAuthCookies(response);
+
+        return Created("", new { expiresAt = response.ExpiresAt });
     }
 
     [HttpPost("refresh")]

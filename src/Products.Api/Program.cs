@@ -77,13 +77,25 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// Add EF Core with InMemory database
-builder.Services.AddDbContext<ProductsDbContext>(options =>
-    options.UseInMemoryDatabase("ProductsDb"));
+// Add EF Core with SQL Server (LocalDB for development)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Server=(localdb)\\mssqllocaldb;Database=ProductsDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+
+if (builder.Environment.EnvironmentName == "Testing")
+{
+    builder.Services.AddDbContext<ProductsDbContext>(options =>
+        options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}"));
+}
+else
+{
+    builder.Services.AddDbContext<ProductsDbContext>(options =>
+        options.UseSqlServer(connectionString));
+}
 
 // Register application services
 builder.Services.AddSingleton(new JwtTokenGenerator(jwtSecret, jwtIssuer, jwtAudience));
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IValidator<CreateProductRequest>, CreateProductValidator>();
@@ -162,6 +174,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Auto-migrate database on startup (non-test environments)
+if (app.Environment.EnvironmentName != "Testing")
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ProductsDbContext>();
+    db.Database.Migrate();
+}
 
 app.Run();
 

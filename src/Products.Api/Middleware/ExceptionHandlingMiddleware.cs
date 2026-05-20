@@ -38,6 +38,11 @@ public class ExceptionHandlingMiddleware
                 "Validation failed.",
                 validationEx.Errors.Select(e => e.ErrorMessage).ToList() as IReadOnlyList<string>
             ),
+            ArgumentException argEx => (
+                (int)HttpStatusCode.BadRequest,
+                argEx.Message,
+                null as IReadOnlyList<string>
+            ),
             UnauthorizedAccessException => (
                 (int)HttpStatusCode.Unauthorized,
                 "Invalid credentials.",
