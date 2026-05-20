@@ -34,10 +34,13 @@ public class TestFixture : IDisposable
                     services.AddDbContext<ProductsDbContext>(options =>
                         options.UseInMemoryDatabase(dbName));
                 });
-                builder.UseEnvironment("Development");
+                builder.UseEnvironment("Testing");
             });
 
-        Client = _factory.CreateClient();
+        Client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            HandleCookies = true
+        });
     }
 
     public async Task<string> GetTokenAsync()
@@ -45,8 +48,19 @@ public class TestFixture : IDisposable
         var login = new LoginRequest("admin", "password123");
         var response = await Client.PostAsJsonAsync("/api/auth/login", login);
         response.EnsureSuccessStatusCode();
-        var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
-        return loginResponse!.Token;
+
+        // The token is set as an httpOnly cookie. Extract from Set-Cookie header.
+        if (response.Headers.TryGetValues("Set-Cookie", out var cookies))
+        {
+            var accessCookie = cookies.FirstOrDefault(c => c.StartsWith("access_token="));
+            if (accessCookie != null)
+            {
+                var token = accessCookie.Split('=', 2)[1].Split(';')[0];
+                return token;
+            }
+        }
+
+        return string.Empty;
     }
 
     public void SetAuth(string token)

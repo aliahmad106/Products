@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Products.Application.DTOs;
 using Xunit;
 
@@ -21,8 +22,12 @@ public class ProductsApiTests : IClassFixture<CustomWebApplicationFactory>
         var login = new LoginRequest("admin", "password123");
         var response = await client.PostAsJsonAsync("/api/auth/login", login);
         response.EnsureSuccessStatusCode();
-        var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
-        return loginResponse!.Token;
+
+        // Extract access token from Set-Cookie header
+        var cookies = response.Headers.GetValues("Set-Cookie");
+        var accessCookie = cookies.First(c => c.StartsWith("access_token="));
+        var token = accessCookie.Split('=', 2)[1].Split(';')[0];
+        return token;
     }
 
     // Health endpoint - anonymous access
