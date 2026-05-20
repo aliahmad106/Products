@@ -19,8 +19,33 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      toast.error('Password must contain at least one uppercase letter');
+      return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      toast.error('Password must contain at least one lowercase letter');
+      return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      toast.error('Password must contain at least one digit');
+      return;
+    }
+
+    if (!/[^a-zA-Z0-9]/.test(password)) {
+      toast.error('Password must contain at least one special character');
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      toast.error('Username can only contain letters, numbers, and underscores');
       return;
     }
 
@@ -60,9 +85,11 @@ export default function RegisterPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Choose a username (min 3 chars)"
+              placeholder="Letters, numbers, underscores (3-30 chars)"
               required
               minLength={3}
+              maxLength={30}
+              pattern="[a-zA-Z0-9_]+"
               autoComplete="username"
               autoFocus
             />
@@ -75,9 +102,10 @@ export default function RegisterPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Choose a password (min 6 chars)"
+              placeholder="Min 8 chars, upper, lower, digit, special"
               required
-              minLength={6}
+              minLength={8}
+              maxLength={128}
               autoComplete="new-password"
             />
           </div>
@@ -91,7 +119,7 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your password"
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
             />
           </div>
@@ -109,6 +137,16 @@ export default function RegisterPage() {
         </form>
 
         <div className="login-footer">
+          <div className="password-requirements">
+            <p><strong>Password requirements:</strong></p>
+            <ul>
+              <li>At least 8 characters</li>
+              <li>One uppercase letter</li>
+              <li>One lowercase letter</li>
+              <li>One digit</li>
+              <li>One special character</li>
+            </ul>
+          </div>
           <p>Already have an account? <Link to="/login" className="auth-link">Sign in</Link></p>
         </div>
       </div>

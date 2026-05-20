@@ -680,3 +680,32 @@ input:focus-visible {
 .auth-link:hover {
   text-decoration: underline;
 }
+
+/* ===== Password Requirements ===== */
+.password-requirements {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.password-requirements p {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.password-requirements ul {
+  list-style: none;
+  padding: 0;
+}
+
+.password-requirements li {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 0.1rem 0;
+}
+
+.password-requirements li::before {
+  content: "•";
+  margin-right: 0.4rem;
+  color: var(--primary);
+}

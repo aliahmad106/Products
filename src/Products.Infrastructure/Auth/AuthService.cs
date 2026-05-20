@@ -38,14 +38,51 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
     {
+        // Username validation
         if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
         {
             throw new ArgumentException("Username must be at least 3 characters.");
         }
 
-        if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
+        if (request.Username.Length > 30)
         {
-            throw new ArgumentException("Password must be at least 6 characters.");
+            throw new ArgumentException("Username must not exceed 30 characters.");
+        }
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(request.Username, @"^[a-zA-Z0-9_]+$"))
+        {
+            throw new ArgumentException("Username can only contain letters, numbers, and underscores.");
+        }
+
+        // Password validation
+        if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8)
+        {
+            throw new ArgumentException("Password must be at least 8 characters.");
+        }
+
+        if (request.Password.Length > 128)
+        {
+            throw new ArgumentException("Password must not exceed 128 characters.");
+        }
+
+        if (!request.Password.Any(char.IsUpper))
+        {
+            throw new ArgumentException("Password must contain at least one uppercase letter.");
+        }
+
+        if (!request.Password.Any(char.IsLower))
+        {
+            throw new ArgumentException("Password must contain at least one lowercase letter.");
+        }
+
+        if (!request.Password.Any(char.IsDigit))
+        {
+            throw new ArgumentException("Password must contain at least one digit.");
+        }
+
+        if (!request.Password.Any(c => !char.IsLetterOrDigit(c)))
+        {
+            throw new ArgumentException("Password must contain at least one special character.");
         }
 
         var exists = await _userRepository.ExistsAsync(request.Username, ct);
