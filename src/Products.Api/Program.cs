@@ -26,8 +26,10 @@ builder.Host.UseSerilog((context, configuration) =>
         .Enrich.WithCorrelationId()
         .WriteTo.Console());
 
-// JWT configuration
-var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "ThisIsASecretKeyForDevelopmentOnly123!";
+// JWT configuration — prefer environment variable, fall back to config, then dev default
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+    ?? builder.Configuration["Jwt:Secret"]
+    ?? "ThisIsASecretKeyForDevelopmentOnly123!";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "Products.Api";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "Products.Client";
 
@@ -77,8 +79,9 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// Add EF Core with SQL Server (LocalDB for development)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+// Add EF Core — connection string from environment or config
+var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Server=(localdb)\\mssqllocaldb;Database=ProductsDb;Trusted_Connection=True;MultipleActiveResultSets=true";
 
 if (builder.Environment.EnvironmentName == "Testing")
@@ -167,6 +170,8 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Testi
 }
 
 app.UseCors();
+
+app.UseMiddleware<CsrfProtectionMiddleware>();
 
 app.UseRateLimiter();
 

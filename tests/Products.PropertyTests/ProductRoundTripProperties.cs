@@ -50,9 +50,9 @@ public class ProductRoundTripProperties : IClassFixture<TestFixture>
 
             // Retrieve all products
             var getResponse = _fixture.Client.GetAsync("/api/products").GetAwaiter().GetResult();
-            var products = getResponse.Content.ReadFromJsonAsync<List<ProductResponse>>().GetAwaiter().GetResult();
+            var paged = getResponse.Content.ReadFromJsonAsync<TestPagedResponse>().GetAwaiter().GetResult();
 
-            var found = products?.Any(p =>
+            var found = paged?.Items.Any(p =>
                 p.Id == created!.Id &&
                 p.Name == request.Name &&
                 p.Price == request.Price &&

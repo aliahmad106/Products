@@ -31,6 +31,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
     ...options.headers,
   };
 

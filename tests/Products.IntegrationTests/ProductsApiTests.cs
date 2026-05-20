@@ -79,8 +79,8 @@ public class ProductsApiTests : IClassFixture<CustomWebApplicationFactory>
         var getResponse = await client.GetAsync("/api/products");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var products = await getResponse.Content.ReadFromJsonAsync<List<ProductResponse>>();
-        products.Should().Contain(p => p.Name == "Integration Widget");
+        var pagedResult = await getResponse.Content.ReadFromJsonAsync<PagedResponse<ProductResponse>>();
+        pagedResult!.Items.Should().Contain(p => p.Name == "Integration Widget");
     }
 
     // Validation error responses

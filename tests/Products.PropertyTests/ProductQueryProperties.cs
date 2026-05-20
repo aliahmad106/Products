@@ -8,9 +8,11 @@ using Xunit;
 
 namespace Products.PropertyTests;
 
+// Helper for deserializing paged responses in tests
+public record TestPagedResponse(List<ProductResponse> Items, int TotalCount, int Page, int PageSize);
+
 /// <summary>
-/// Feature: products-web-api, Property 7: Colour filter returns only matching products (case-insensitive)
-/// Validates: Requirements 5.1
+/// Property: Colour filter returns only matching products (case-insensitive)
 /// </summary>
 public class ColourFilterProperties : IClassFixture<TestFixture>
 {
@@ -31,7 +33,6 @@ public class ColourFilterProperties : IClassFixture<TestFixture>
             var token = _fixture.GetTokenAsync().GetAwaiter().GetResult();
             _fixture.SetAuth(token);
 
-            // Create products with different colours
             var targetRequest = new CreateProductRequest($"Product_{Guid.NewGuid():N}", null, 10m, colour);
             _fixture.Client.PostAsJsonAsync("/api/products", targetRequest).GetAwaiter().GetResult();
 
@@ -39,22 +40,20 @@ public class ColourFilterProperties : IClassFixture<TestFixture>
             var otherRequest = new CreateProductRequest($"Other_{Guid.NewGuid():N}", null, 20m, otherColour);
             _fixture.Client.PostAsJsonAsync("/api/products", otherRequest).GetAwaiter().GetResult();
 
-            // Query with colour filter (test case-insensitivity)
             var filterColour = colour.ToUpper();
             var response = _fixture.Client.GetAsync($"/api/products?colour={filterColour}").GetAwaiter().GetResult();
-            var products = response.Content.ReadFromJsonAsync<List<ProductResponse>>().GetAwaiter().GetResult();
+            var paged = response.Content.ReadFromJsonAsync<TestPagedResponse>().GetAwaiter().GetResult();
 
-            var allMatch = products?.All(p =>
+            var allMatch = paged?.Items.All(p =>
                 string.Equals(p.Colour, colour, StringComparison.OrdinalIgnoreCase)) ?? false;
 
-            return allMatch.Label($"All returned products should have colour '{colour}' (filtered with '{filterColour}')");
+            return allMatch.Label($"All returned products should have colour '{colour}'");
         });
     }
 }
 
 /// <summary>
-/// Feature: products-web-api, Property 8: Whitespace colour filter returns all products
-/// Validates: Requirements 5.3
+/// Property: Whitespace colour filter returns all products
 /// </summary>
 public class WhitespaceFilterProperties : IClassFixture<TestFixture>
 {
@@ -75,16 +74,14 @@ public class WhitespaceFilterProperties : IClassFixture<TestFixture>
             var token = _fixture.GetTokenAsync().GetAwaiter().GetResult();
             _fixture.SetAuth(token);
 
-            // Get all products without filter
             var allResponse = _fixture.Client.GetAsync("/api/products").GetAwaiter().GetResult();
-            var allProducts = allResponse.Content.ReadFromJsonAsync<List<ProductResponse>>().GetAwaiter().GetResult();
+            var allPaged = allResponse.Content.ReadFromJsonAsync<TestPagedResponse>().GetAwaiter().GetResult();
 
-            // Get products with whitespace filter
             var filteredResponse = _fixture.Client.GetAsync($"/api/products?colour={Uri.EscapeDataString(whitespace)}").GetAwaiter().GetResult();
-            var filteredProducts = filteredResponse.Content.ReadFromJsonAsync<List<ProductResponse>>().GetAwaiter().GetResult();
+            var filteredPaged = filteredResponse.Content.ReadFromJsonAsync<TestPagedResponse>().GetAwaiter().GetResult();
 
-            return (allProducts?.Count == filteredProducts?.Count)
-                .Label($"Whitespace filter '{whitespace}' should return same count as no filter ({allProducts?.Count} vs {filteredProducts?.Count})");
+            return (allPaged?.TotalCount == filteredPaged?.TotalCount)
+                .Label($"Whitespace filter should return same count as no filter ({allPaged?.TotalCount} vs {filteredPaged?.TotalCount})");
         });
     }
 }

@@ -74,3 +74,7 @@ publish/
 *.env
 .env.*
 .kiro
+
+# Architecture/diagram files (keep README)
+ARCHITECTURE.md
+*.drawio

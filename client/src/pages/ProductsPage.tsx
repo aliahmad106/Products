@@ -15,8 +15,8 @@ export default function ProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<Product[]>('/api/products');
-      setProducts(data);
+      const data = await apiFetch<{ items: Product[]; totalCount: number; page: number; pageSize: number; totalPages: number }>('/api/products?pageSize=100');
+      setProducts(data.items);
     } catch {
       toast.error('Failed to load products');
     } finally {

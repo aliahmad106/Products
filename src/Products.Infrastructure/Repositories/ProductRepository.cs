@@ -36,24 +36,62 @@ public class ProductRepository : IProductRepository
         }, ct);
     }
 
+    public async Task<Product?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return await _context.Products.FindAsync(new object[] { id }, ct);
+    }
+
     public async Task<IReadOnlyList<Product>> GetAllAsync(CancellationToken ct = default)
     {
-        return await _retryPipeline.ExecuteAsync(async token =>
-        {
-            return (IReadOnlyList<Product>)await _context.Products
-                .AsNoTracking()
-                .ToListAsync(token);
-        }, ct);
+        return await _context.Products
+            .AsNoTracking()
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync(ct);
     }
 
     public async Task<IReadOnlyList<Product>> GetByColourAsync(string colour, CancellationToken ct = default)
     {
-        return await _retryPipeline.ExecuteAsync(async token =>
+        return await _context.Products
+            .AsNoTracking()
+            .Where(p => p.Colour.ToLower() == colour.ToLower())
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    public async Task<(IReadOnlyList<Product> Items, int TotalCount)> GetPagedAsync(
+        string? colour, int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _context.Products.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(colour))
         {
-            return (IReadOnlyList<Product>)await _context.Products
-                .AsNoTracking()
-                .Where(p => p.Colour.ToLower().Contains(colour.ToLower()))
-                .ToListAsync(token);
-        }, ct);
+            query = query.Where(p => p.Colour.ToLower() == colour.ToLower());
+        }
+
+        var totalCount = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return (items, totalCount);
+    }
+
+    public async Task UpdateAsync(Product product, CancellationToken ct = default)
+    {
+        _context.Products.Update(product);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var product = await _context.Products.FindAsync(new object[] { id }, ct);
+        if (product == null) return false;
+
+        _context.Products.Remove(product);
+        await _context.SaveChangesAsync(ct);
+        return true;
     }
 }

@@ -3,6 +3,11 @@ import { LoginRequest } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:54736';
 
+const AUTH_HEADERS: HeadersInit = {
+  'Content-Type': 'application/json',
+  'X-Requested-With': 'XMLHttpRequest',
+};
+
 interface AuthContextType {
   isAuthenticated: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
@@ -14,14 +19,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    // Check if we have a session marker (not the token itself — that's in httpOnly cookie)
     return localStorage.getItem('authenticated') === 'true';
   });
 
   const login = async (credentials: LoginRequest) => {
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: AUTH_HEADERS,
       credentials: 'include',
       body: JSON.stringify(credentials),
     });
@@ -38,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (credentials: LoginRequest) => {
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: AUTH_HEADERS,
       credentials: 'include',
       body: JSON.stringify(credentials),
     });
@@ -56,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
         credentials: 'include',
       });
     } catch {
@@ -69,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
         credentials: 'include',
       });
       if (response.ok) {
@@ -81,7 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   }, []);
 
-  // Set up a periodic token refresh (every 12 minutes for a 15-min access token)
   useEffect(() => {
     if (!isAuthenticated) return;
 

@@ -20,4 +20,12 @@ public class Product
         Colour = colour;
         CreatedAt = DateTime.UtcNow;
     }
+
+    public void Update(string name, string? description, decimal price, string colour)
+    {
+        Name = name;
+        Description = description;
+        Price = price;
+        Colour = colour;
+    }
 }
